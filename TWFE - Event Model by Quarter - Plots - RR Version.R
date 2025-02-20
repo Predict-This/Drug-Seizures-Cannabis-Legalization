@@ -115,7 +115,14 @@ state_quarter_group_check <- df %>%
 
 print(state_quarter_group_check)
 
-#create drug group specific datasets 
+#Create time series of plots of the logged and raw outcomes by state, separte treatment and control
+# Create time series of plots of the logged and raw outcomes by state, separate treatment and control
+
+# Function to create time series plots
+# Sort the data by state and quarter
+df <- df %>% arrange(state, quarter)
+
+#Create drug group specific datasets 
 all_seize <- df[df$drug_group == "alldrugs_fullpoprate", ]
 had_can <-df[df$drug_group == "cannabis_fullpoprate", ]
 no_can <- df[df$drug_group == "alldrugs_no_c_fullpoprate", ]
@@ -146,7 +153,6 @@ panelview(log_rate~rcl|sid+quarter, data=pv,index= c("state","quarter"))
 model.twfe.0 <- feols(log_rate~rcl|sid+quarter,
                       data=all_seize, cluster = "sid") #use the clustered standard error
 print(model.twfe.0)
-
 
 model.twfe.0 <- feols(log_rate~rcl|sid+quarter+region:quarter,
             data=all_seize, cluster = "sid") #use the clustered standard error
@@ -251,6 +257,11 @@ ggdid(did_model_can_only)
 # Simplify the summary
 agg.simple <- aggte(did_model_can_only, type = "simple")
 summary(agg.simple)
+
+# Dynamic Effects and Event Study + plot
+agg.es <- aggte(did_model_all, type = "dynamic")
+summary(agg.es)
+ggdid(agg.es)
 
 #all drugs except cannabis seizures
 did_model_no_can <- att_gt(
@@ -406,6 +417,7 @@ agg.simple <- aggte(did_model_all_nocan_rr, type = "simple")
 summary(agg.simple)
 
 #cannabis seizure black-white risk ratio
+# Define
 did_model_can_only_rr <- att_gt(
   yname = "log_rate",
   tname = "quarter",
