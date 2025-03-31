@@ -144,6 +144,16 @@ meth_nocan_rr<- df[df$drug_group == "meth_no_c_RR", ]
 opioids_rr<- df[df$drug_group == "opioids_RR", ]
 opioids_nocan_rr<- df[df$drug_group == "opioids_no_c_RR", ]
 
+# create versions of all_seize and can_only_rr without
+# connecticut and viriginia to id potential heterogeneity
+# invisible to att_gt methods with both states included
+
+all_seize_no_va <- all_seize[all_seize$state !="va", ]
+all_seize_no_ct <- all_seize[all_seize$state !="ct", ]
+
+can_only_rr_no_va <- can_only_rr[can_only_rr$state !="va", ]
+can_only_rr_no_ct <- can_only_rr[can_only_rr$state !="ct", ]
+
 #Create figure of state timelines and quarters, make sure timeline matches assigned quarter_group
 pv <- all_seize[all_seize$study == 1, ]
 panelview(log_rate~rcl|sid+quarter, data=pv,index= c("state","quarter"))
@@ -154,6 +164,7 @@ model.twfe.0 <- feols(log_rate~rcl|sid+quarter,
                       data=all_seize, cluster = "sid") #use the clustered standard error
 print(model.twfe.0)
 
+# Compare to model using the Region*quarter interaction as covariate
 model.twfe.0 <- feols(log_rate~rcl|sid+quarter+region:quarter,
             data=all_seize, cluster = "sid") #use the clustered standard error
 print(model.twfe.0)
@@ -219,6 +230,38 @@ ggdid(did_model_all_ihs)
   # Simplify the summary
 agg.simple <- aggte(did_model_all_ihs, type = "simple")
 summary(agg.simple)
+
+# ALL_SEIZE ROBUSTNESS CHECK - REMOVE VA
+did_model_all_no_va <- att_gt(
+    yname = "log_rate",
+    tname = "quarter",
+    idname = "sid",
+    gname = "Tquarter_group",
+    xformla = ~1,
+    data = all_seize_no_va,
+    panel = TRUE,
+    clustervars = "sid")
+
+  # Summarize the results
+summary(did_model_all_no_va)
+  # Plot the difference-in-differences estimates across time by group (based on legalization quarter)
+ggdid(did_model_all_no_va)
+
+# ALL_SEIZE ROBUSTNESS CHECK - REMOVE CT
+did_model_all_no_ct <- att_gt(
+    yname = "log_rate",
+    tname = "quarter",
+    idname = "sid",
+    gname = "Tquarter_group",
+    xformla = ~1,
+    data = all_seize_no_ct,
+    panel = TRUE,
+    clustervars = "sid")
+
+  # Summarize the results
+summary(did_model_all_no_ct)
+  # Plot the difference-in-differences estimates across time by group (based on legalization quarter)
+ggdid(did_model_all_no_ct)
 
 # drug seizures included cannabis
 did_model_had_can <- att_gt(
@@ -417,7 +460,6 @@ agg.simple <- aggte(did_model_all_nocan_rr, type = "simple")
 summary(agg.simple)
 
 #cannabis seizure black-white risk ratio
-# Define
 did_model_can_only_rr <- att_gt(
   yname = "log_rate",
   tname = "quarter",
@@ -435,6 +477,38 @@ ggdid(did_model_can_only_rr)
 # Simplify the summary
 agg.simple <- aggte(did_model_can_only_rr, type = "simple")
 summary(agg.simple)
+
+# can_only_rr ROBUSTNESS CHECK - REMOVE VA
+did_model_can_only_rr_no_va <- att_gt(
+    yname = "log_rate",
+    tname = "quarter",
+    idname = "sid",
+    gname = "Tquarter_group",
+    xformla = ~1,
+    data = can_only_rr_no_va,
+    panel = TRUE,
+    clustervars = "sid")
+
+  # Summarize the results
+summary(did_model_can_only_rr_no_va)
+  # Plot the difference-in-differences estimates across time by group (based on legalization quarter)
+ggdid(did_model_can_only_rr_no_va)
+
+# can_only_rr ROBUSTNESS CHECK - REMOVE CT
+did_model_can_only_rr_no_ct <- att_gt(
+    yname = "log_rate",
+    tname = "quarter",
+    idname = "sid",
+    gname = "Tquarter_group",
+    xformla = ~1,
+    data = can_only_rr_no_ct,
+    panel = TRUE,
+    clustervars = "sid")
+
+  # Summarize the results
+summary(did_model_can_only_rr_no_ct)
+  # Plot the difference-in-differences estimates across time by group (based on legalization quarter)
+ggdid(did_model_can_only_rr_no_ct)
 
 #Included cocaine and crack black-white risk ratio
 did_model_coke_rr <- att_gt(
